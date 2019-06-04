@@ -5,6 +5,7 @@ const knex = require("knex");
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const { validateEmail } = require("./helpers/validateEmail");
+const { verifyToken } = require("./helpers/verifyToken");
 
 const db = knex({
   client: "pg",
@@ -34,25 +35,38 @@ app.post("/api/login", (req, res) => {
       .where("email", "=", email)
       .then(users => {
         if (users[0]) {
-          const user = users[0];
-          bcrypt.compare(password, user.password, (err, response) => {
+          const dbUser = users[0];
+          bcrypt.compare(password, dbUser.password, (err, response) => {
             if (err || !response) {
-              res.sendStatus(400);
+              res.status(400).json({
+                message: "Could not log in."
+              });
             } else {
+              const user = {
+                id: dbUser.id,
+                name: dbUser.name,
+                email: dbUser.email
+              };
               jwt.sign({ user }, process.env.SECRET_KEY, (err, token) => {
                 if (err) {
-                  res.sendStatus(400);
+                  res.status(400).json({
+                    message: "Could not log in."
+                  });
                 }
                 res.status(200).json(token);
               });
             }
           });
         } else {
-          res.sendStatus(400);
+          res.status(400).json({
+            message: "Could not log in."
+          });
         }
       });
   } else {
-    res.sendStatus(400);
+    res.status(400).json({
+      message: "Please fill correctly every field."
+    });
   }
 });
 
@@ -108,8 +122,34 @@ app.post("/api/register", (req, res) => {
   } else if (password !== passwordConfirmation) {
     res.status(400).json({ message: "The passwords don't match." });
   } else {
-    res.status(400).json({ message: "Please fill every field." });
+    res.status(400).json({ message: "Please fill correctly every field." });
   }
+});
+
+app.post("/api/todo", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
+    const { user } = authData;
+    const { title, description, dateUntil, isImportant } = req.body;
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      if (title) {
+        db("todos")
+          .returning("title")
+          .insert({
+            title,
+            description,
+            userid: user.id,
+            dateadded: new Date(),
+            dateuntil: dateUntil,
+            datefinished: null,
+            important: isImportant
+          })
+          .then(response => res.status(200).json(response[0]))
+          .catch(err => res.sendStatus(400));
+      }
+    }
+  });
 });
 
 app.listen(5000);
