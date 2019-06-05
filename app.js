@@ -143,11 +143,56 @@ app.post("/api/todo", verifyToken, (req, res) => {
             dateadded: new Date(),
             dateuntil: dateUntil,
             datefinished: null,
-            important: isImportant
+            important: isImportant,
+            iscompleted: false
           })
           .then(response => res.status(200).json(response[0]))
           .catch(err => res.sendStatus(400));
       }
+    }
+  });
+});
+
+app.get("/api/todo", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
+    const { user } = authData;
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      db.select("*")
+        .from("todos")
+        .where("userid", "=", user.id)
+        .then(response => res.status(200).json(response));
+    }
+  });
+});
+
+app.delete("/api/todo/:id", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
+    const { user } = authData;
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      db("todos")
+        .where("id", req.params.id)
+        .del()
+        .then(response => res.status(200).json(response));
+    }
+  });
+});
+
+app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
+    const { user } = authData;
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      db("todos")
+        .where("id", req.params.id)
+        .update({
+          iscompleted: true
+        })
+        .then(response => res.status(200).json(response));
     }
   });
 });
