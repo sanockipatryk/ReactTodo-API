@@ -27,6 +27,8 @@ app.get("/api", (req, res) => {
   });
 });
 
+//login user and send back authorization token
+
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   if (validateEmail(email) && password) {
@@ -69,6 +71,8 @@ app.post("/api/login", (req, res) => {
     });
   }
 });
+
+//register an user
 
 app.post("/api/register", (req, res) => {
   const { name, email, password, passwordConfirmation } = req.body;
@@ -126,10 +130,12 @@ app.post("/api/register", (req, res) => {
   }
 });
 
+//add new todo to the database
+
 app.post("/api/todo", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
     const { user } = authData;
-    const { title, description, dateUntil, isImportant } = req.body;
+    const { title, dateUntil, isImportant } = req.body;
     if (err) {
       res.sendStatus(403);
     } else {
@@ -138,20 +144,24 @@ app.post("/api/todo", verifyToken, (req, res) => {
           .returning("title")
           .insert({
             title,
-            description,
             userid: user.id,
             dateadded: new Date(),
-            dateuntil: dateUntil,
+            dateuntil: dateUntil ? dateUntil : null,
             datefinished: null,
             important: isImportant,
             iscompleted: false
           })
           .then(response => res.status(200).json(response[0]))
-          .catch(err => res.sendStatus(400));
+          .catch(err => {
+            console.log(err);
+            res.sendStatus(400);
+          });
       }
     }
   });
 });
+
+//get all todos of an user
 
 app.get("/api/todo", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
@@ -162,10 +172,13 @@ app.get("/api/todo", verifyToken, (req, res) => {
       db.select("*")
         .from("todos")
         .where("userid", "=", user.id)
+        .orderBy("dateadded")
         .then(response => res.status(200).json(response));
     }
   });
 });
+
+//delete a todo
 
 app.delete("/api/todo/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
@@ -181,6 +194,8 @@ app.delete("/api/todo/:id", verifyToken, (req, res) => {
   });
 });
 
+//change todo status to completed
+
 app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
     const { user } = authData;
@@ -190,7 +205,29 @@ app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
       db("todos")
         .where("id", req.params.id)
         .update({
-          iscompleted: true
+          iscompleted: true,
+          datefinished: new Date()
+        })
+        .then(response => res.status(200).json(response));
+    }
+  });
+});
+
+//edit todo
+
+app.put("/api/todo/edit/:id", verifyToken, (req, res) => {
+  jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
+    const { title, dateUntil, isImportant } = req.body;
+    const { user } = authData;
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      db("todos")
+        .where("id", req.params.id)
+        .update({
+          title: title,
+          dateuntil: dateUntil ? dateUntil : null,
+          isimportant: isImportant
         })
         .then(response => res.status(200).json(response));
     }
