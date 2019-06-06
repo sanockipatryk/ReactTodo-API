@@ -153,7 +153,6 @@ app.post("/api/todo", verifyToken, (req, res) => {
           })
           .then(response => res.status(200).json(response[0]))
           .catch(err => {
-            console.log(err);
             res.sendStatus(400);
           });
       }
@@ -219,7 +218,6 @@ app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
 app.put("/api/todo/edit/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
     const { title, dateUntil, isImportant } = req.body;
-
     if (err) {
       res.sendStatus(403);
     } else {
@@ -228,10 +226,12 @@ app.put("/api/todo/edit/:id", verifyToken, (req, res) => {
         .update({
           title: title,
           dateuntil: dateUntil ? dateUntil : null,
-          isimportant: isImportant
+          important: isImportant
         })
         .then(response => res.status(200).json(response))
-        .catch(err => res.sendStatus(400));
+        .catch(err => {
+          res.sendStatus(400);
+        });
     }
   });
 });

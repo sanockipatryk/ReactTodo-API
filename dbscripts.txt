@@ -1,0 +1,18 @@
+create table users (
+	id serial primary key,
+	name varchar(100) not null,
+	email text unique not null,
+	password text not null
+)
+
+create table todos (
+	id serial primary key,
+	title varchar(250) not null,
+	userid integer not null,
+	dateadded timestamp not null,
+	dateuntil timestamp,
+	datefinished timestamp,
+	important boolean not null,
+	iscompleted boolean not null,
+	foreign key ( userid) references users(id)
+)
