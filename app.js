@@ -173,7 +173,8 @@ app.get("/api/todo", verifyToken, (req, res) => {
         .from("todos")
         .where("userid", "=", user.id)
         .orderBy("dateadded")
-        .then(response => res.status(200).json(response));
+        .then(response => res.status(200).json(response))
+        .catch(err => res.sendStatus(400));
     }
   });
 });
@@ -182,14 +183,14 @@ app.get("/api/todo", verifyToken, (req, res) => {
 
 app.delete("/api/todo/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
-    const { user } = authData;
     if (err) {
       res.sendStatus(403);
     } else {
       db("todos")
         .where("id", req.params.id)
         .del()
-        .then(response => res.status(200).json(response));
+        .then(response => res.status(200).json(response))
+        .catch(err => res.sendStatus(400));
     }
   });
 });
@@ -198,7 +199,6 @@ app.delete("/api/todo/:id", verifyToken, (req, res) => {
 
 app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
-    const { user } = authData;
     if (err) {
       res.sendStatus(403);
     } else {
@@ -208,7 +208,8 @@ app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
           iscompleted: true,
           datefinished: new Date()
         })
-        .then(response => res.status(200).json(response));
+        .then(response => res.status(200).json(response))
+        .catch(err => res.sendStatus(400));
     }
   });
 });
@@ -218,7 +219,7 @@ app.put("/api/todo/complete/:id", verifyToken, (req, res) => {
 app.put("/api/todo/edit/:id", verifyToken, (req, res) => {
   jwt.verify(req.token, process.env.SECRET_KEY, (err, authData) => {
     const { title, dateUntil, isImportant } = req.body;
-    const { user } = authData;
+
     if (err) {
       res.sendStatus(403);
     } else {
@@ -229,7 +230,8 @@ app.put("/api/todo/edit/:id", verifyToken, (req, res) => {
           dateuntil: dateUntil ? dateUntil : null,
           isimportant: isImportant
         })
-        .then(response => res.status(200).json(response));
+        .then(response => res.status(200).json(response))
+        .catch(err => res.sendStatus(400));
     }
   });
 });
