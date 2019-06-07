@@ -171,7 +171,7 @@ app.get("/api/todo", verifyToken, (req, res) => {
       db.select("*")
         .from("todos")
         .where("userid", "=", user.id)
-        .orderBy("dateadded")
+        .orderBy("dateadded", "desc")
         .then(response => res.status(200).json(response))
         .catch(err => res.sendStatus(400));
     }
